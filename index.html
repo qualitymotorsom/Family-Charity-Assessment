@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Charity Assessment System</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Segoe UI, Arial, sans-serif;
+    background:#f4f6f9;
+    margin:0;
+    padding:20px;
+}
+
+.container{
+    max-width:1100px;
+    margin:auto;
+    background:white;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+
+h1,h2{
+    color:#2c3e50;
+}
+
+label{
+    display:block;
+    margin-top:10px;
+    font-weight:bold;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    border:1px solid #ccc;
+    border-radius:6px;
+}
+
+button{
+    margin-top:15px;
+    padding:10px 16px;
+    border:none;
+    background:#0078d4;
+    color:white;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#005fa3;
+}
+
+.hidden{
+    display:none;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+th, td{
+    border:1px solid #ddd;
+    padding:10px;
+    text-align:left;
+}
+
+th{
+    background:#0078d4;
+    color:white;
+}
+
+.eligible{
+    color:green;
+    font-weight:bold;
+}
+
+.noteligible{
+    color:red;
+    font-weight:bold;
+}
+
+.dashboard{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.card{
+    background:#f8f9fa;
+    padding:15px;
+    border-radius:10px;
+    text-align:center;
+}
+
+.card h3{
+    margin:0;
+    color:#555;
+}
+
+.card p{
+    font-size:24px;
+    font-weight:bold;
+    margin:10px 0 0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div id="loginPage">
+
+        <h1>Family Charity Assessment System</h1>
+
+        <label>User Name</label>
+        <input type="text" id="username">
+
+        <label>Password</label>
+        <input type="password" id="password">
+
+        <button onclick="login()">Login</button>
+
+        <p id="loginMessage"></p>
+
+        <p>
+            Demo Credentials:<br>
+            User: <strong>admin</strong><br>
+            Password: <strong>1234</strong>
+        </p>
+
+    </div>
+
+    <div id="mainPage" class="hidden">
+
+        <h2>Family Information</h2>
+
+        <div class="dashboard">
+            <div class="card">
+                <h3>Total Families</h3>
+                <p id="totalFamilies">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Eligible</h3>
+                <p id="eligibleCount">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Not Eligible</h3>
+                <p id="notEligibleCount">0</p>
+            </div>
+        </div>
+
+        <label>Family Name</label>
+        <input type="text" id="familyName">
+
+        <label>Head of Family</label>
+        <input type="text" id="headName">
+
+        <label>Family Members</label>
+        <input type="number" id="members">
+
+        <label>Monthly Income</label>
+        <input type="number" id="income">
+
+        <label>Total Liabilities / Debts</label>
+        <input type="number" id="liabilities">
+
+        <button onclick="addFamily()">Save Family</button>
+        <button onclick="exportCSV()">Export CSV</button>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Family</th>
+                    <th>Head Name</th>
+                    <th>Members</th>
+                    <th>Income</th>
+                    <th>Liabilities</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody id="familyTable"></tbody>
+        </table>
+
+    </div>
+
+</div>
+
+<script>
+
+let families = [];
+
+function login(){
+
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    if(username === "admin" && password === "1234"){
+
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("mainPage").classList.remove("hidden");
+
+    }else{
+
+        document.getElementById("loginMessage").innerHTML =
+        "<span style='color:red'>Invalid username or password.</span>";
+    }
+}
+
+function addFamily(){
+
+    const familyName = document.getElementById("familyName").value;
+    const headName = document.getElementById("headName").value;
+    const members = Number(document.getElementById("members").value);
+    const income = Number(document.getElementById("income").value);
+    const liabilities = Number(document.getElementById("liabilities").value);
+
+    if(!familyName || !headName){
+        alert("Please complete all required fields.");
+        return;
+    }
+
+    let status = "Not Eligible";
+
+    if(income < 1000 || liabilities > (income * 2)){
+        status = "Eligible";
+    }
+
+    families.push({
+        familyName,
+        headName,
+        members,
+        income,
+        liabilities,
+        status
+    });
+
+    renderTable();
+    updateDashboard();
+
+    document.getElementById("familyName").value="";
+    document.getElementById("headName").value="";
+    document.getElementById("members").value="";
+    document.getElementById("income").value="";
+    document.getElementById("liabilities").value="";
+}
+
+function renderTable(){
+
+    const tbody = document.getElementById("familyTable");
+    tbody.innerHTML = "";
+
+    families.forEach(f => {
+
+        let row = document.createElement("tr");
+
+        row.innerHTML = `
+        <td>${f.familyName}</td>
+        <td>${f.headName}</td>
+        <td>${f.members}</td>
+        <td>${f.income}</td>
+        <td>${f.liabilities}</td>
+        <td class="${f.status === 'Eligible' ? 'eligible' : 'noteligible'}">
+            ${f.status}
+        </td>
+        `;
+
+        tbody.appendChild(row);
+    });
+}
+
+function updateDashboard(){
+
+    const total = families.length;
+
+    const eligible =
+    families.filter(x => x.status === "Eligible").length;
+
+    const notEligible =
+    families.filter(x => x.status === "Not Eligible").length;
+
+    document.getElementById("totalFamilies").innerText = total;
+    document.getElementById("eligibleCount").innerText = eligible;
+    document.getElementById("notEligibleCount").innerText = notEligible;
+}
+
+function exportCSV(){
+
+    let csv =
+    "Family Name,Head Name,Members,Income,Liabilities,Status\n";
+
+    families.forEach(f => {
+
+        csv +=
+        `${f.familyName},${f.headName},${f.members},${f.income},${f.liabilities},${f.status}\n`;
+
+    });
+
+    const blob = new Blob([csv], {type:"text/csv"});
+
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+
+    link.download = "FamiliesData.csv";
+
+    link.click();
+}
+
+</script>
+
+</body>
+</html>
